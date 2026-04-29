@@ -221,6 +221,46 @@ function renderAssignedFeed(results) {
 
         const snowUrl = `https://dev375174.service-now.com/nav_to.do?uri=incident.do?sys_id=${encodeURIComponent(r.sys_id)}`;
 
+        const hasResolution = r.resolution && r.resolution.steps;
+        let resolutionHtml = '';
+        if (hasResolution) {
+            const res = r.resolution;
+            resolutionHtml = `
+            <div class="resolution-section">
+                <div class="resolution-header" onclick="toggleResolution(this)">
+                    <span>📋 Resolution Guide: ${esc(res.resolution_title || '')}</span>
+                    <span class="resolution-toggle">▶</span>
+                </div>
+                <div class="resolution-body" style="display:none">
+                    <div class="resolution-meta">
+                        <span class="badge badge-category">⏱ ${esc(res.estimated_resolution_time || 'N/A')}</span>
+                        ${(res.kb_articles_used || []).map(kb => `<span class="badge badge-kb">${esc(kb)}</span>`).join('')}
+                    </div>
+                    <div class="resolution-steps">
+                        ${(res.steps || []).map(s => `
+                            <div class="resolution-step">
+                                <div class="step-number">${s.step_number}</div>
+                                <div class="step-content">
+                                    <div class="step-action">${esc(s.action)}</div>
+                                    <div class="step-details">${esc(s.details)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${(res.warnings || []).length ? `
+                        <div class="resolution-warnings">
+                            ${res.warnings.map(w => `<div class="warning-item">⚠️ ${esc(w)}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    ${res.escalation_note ? `
+                        <div class="resolution-escalation">
+                            <strong>Escalation:</strong> ${esc(res.escalation_note)}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>`;
+        }
+
         return `
         <div class="incident-card" style="animation-delay:${i * 0.06}s">
             <div class="card-header">
@@ -241,7 +281,9 @@ function renderAssignedFeed(results) {
                 </div>
                 <span>${confPct}%</span>
             </div>
+            ${resolutionHtml}
             <div class="card-actions">
+                ${!hasResolution ? `<button class="btn btn-resolve" onclick="resolveIncident('${esc(r.sys_id)}', this)">📋 Get Resolution Steps</button>` : ''}
                 <a href="${snowUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-snow">
                     🔗 Open in ServiceNow
                 </a>
@@ -323,6 +365,34 @@ async function assignIncident(sysId, btnEl) {
         showToast("Assignment failed", "error");
         btnEl.textContent = "Retry";
         btnEl.disabled = false;
+    }
+}
+
+// ---- Resolve Incident (get resolution steps from resolver agent) ----
+async function resolveIncident(sysId, btnEl) {
+    btnEl.disabled = true;
+    btnEl.textContent = "Generating…";
+    try {
+        const data = await apiPost("/api/resolve", { sys_id: sysId });
+        showToast("Resolution guide generated", "success");
+        await loadRecent();
+    } catch (e) {
+        console.error("Resolve failed:", e);
+        showToast("Failed to generate resolution", "error");
+        btnEl.textContent = "Retry";
+        btnEl.disabled = false;
+    }
+}
+
+function toggleResolution(headerEl) {
+    const body = headerEl.nextElementSibling;
+    const toggle = headerEl.querySelector(".resolution-toggle");
+    if (body.style.display === "none") {
+        body.style.display = "block";
+        toggle.textContent = "▼";
+    } else {
+        body.style.display = "none";
+        toggle.textContent = "▶";
     }
 }
 

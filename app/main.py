@@ -12,6 +12,7 @@ from app.embedding_engine import EmbeddingEngine
 from app.feedback import FeedbackStore
 from app.logging_config import setup_logging
 from app.models import AssignmentAction, FeedbackRecord, Incident
+from app.resolver_agent import IncidentResolverAgent
 from app.servicenow_client import ServiceNowClient
 
 logger = structlog.get_logger(__name__)
@@ -23,6 +24,7 @@ snow_client: ServiceNowClient | None = None
 embedding_engine: EmbeddingEngine | None = None
 agent: ClassificationAgent | None = None
 decision_engine: DecisionEngine | None = None
+resolver_agent: IncidentResolverAgent | None = None
 feedback_store: FeedbackStore | None = None
 scheduler: BackgroundScheduler | None = None
 last_poll_time: str | None = None
@@ -41,7 +43,7 @@ MAX_RECENT = 50
 # ---------------------------------------------------------------------------
 
 def process_incident(incident: Incident) -> dict:
-    """Full pipeline: classify → search → decide → assign."""
+    """Full pipeline: classify → search → decide → assign → resolve."""
     global recent_results
 
     # Prevent double-assignment
@@ -80,6 +82,24 @@ def process_incident(incident: Incident) -> dict:
         assigned_team=decision.assignment_group,
     )
 
+    # 6. Generate resolution guide using the Resolver Agent
+    resolution = None
+    try:
+        resolution = resolver_agent.resolve(
+            incident_number=incident.number,
+            short_description=incident.short_description,
+            description=incident.description,
+            category=classification.category,
+            severity=classification.severity.value,
+            assigned_team=decision.assignment_group,
+            assigned_to=decision.assigned_to or "",
+        )
+        # Post resolution steps as a work note to ServiceNow
+        worknote = resolver_agent.format_as_worknote(resolution)
+        snow_client.add_worklog(incident.sys_id, worknote)
+    except Exception:
+        logger.exception("resolver_agent_error", incident=incident.number)
+
     # Mark as assigned
     assigned_sys_ids.add(incident.sys_id)
 
@@ -99,6 +119,7 @@ def process_incident(incident: Incident) -> dict:
         "confidence": classification.confidence_score,
         "summary": classification.summary,
         "similar_count": len(similar),
+        "resolution": resolution,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -135,7 +156,7 @@ def poll_new_incidents() -> None:
 # ---------------------------------------------------------------------------
 
 def create_app() -> Flask:
-    global snow_client, embedding_engine, agent, decision_engine, feedback_store, scheduler
+    global snow_client, embedding_engine, agent, decision_engine, resolver_agent, feedback_store, scheduler
 
     setup_logging(settings.log_level)
     logger.info("starting_smartdesk_ai")
@@ -151,6 +172,7 @@ def create_app() -> Flask:
     embedding_engine = EmbeddingEngine()
     agent = ClassificationAgent()
     decision_engine = DecisionEngine()
+    resolver_agent = IncidentResolverAgent(embedding_engine)
     feedback_store = FeedbackStore()
 
     # Start background polling scheduler
@@ -363,6 +385,51 @@ def create_app() -> Flask:
             return jsonify(result), 409
 
         return jsonify({"status": "assigned", "result": result})
+
+    @application.route("/api/resolve", methods=["POST"])
+    def resolve_incident_endpoint():
+        """Generate resolution steps for an already-assigned incident."""
+        payload = request.get_json(force=True)
+        sys_id = payload.get("sys_id")
+        if not sys_id:
+            return jsonify({"error": "sys_id is required"}), 422
+
+        # Find the incident in recent results
+        target = None
+        for r in recent_results:
+            if r.get("sys_id") == sys_id:
+                target = r
+                break
+
+        if not target:
+            return jsonify({"error": "Incident not found in recent results"}), 404
+
+        # If resolution already exists, return it
+        if target.get("resolution"):
+            return jsonify({"status": "ok", "resolution": target["resolution"]})
+
+        # Generate resolution
+        try:
+            resolution = resolver_agent.resolve(
+                incident_number=target["incident_number"],
+                short_description=target["short_description"],
+                description=target.get("description", target.get("summary", "")),
+                category=target["category"],
+                severity=target["severity"],
+                assigned_team=target["assigned_team"],
+                assigned_to=target.get("assigned_to", ""),
+            )
+            # Post to ServiceNow as work note
+            worknote = resolver_agent.format_as_worknote(resolution)
+            snow_client.add_worklog(sys_id, worknote)
+
+            # Update stored result
+            target["resolution"] = resolution
+
+            return jsonify({"status": "ok", "resolution": resolution})
+        except Exception as e:
+            logger.exception("resolve_endpoint_error", sys_id=sys_id)
+            return jsonify({"error": str(e)}), 500
 
     @application.route("/api/poll-now", methods=["POST"])
     def trigger_poll():

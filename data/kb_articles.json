@@ -1,0 +1,202 @@
+[
+  {
+    "id": "KB0001",
+    "title": "VPN Connection Failure",
+    "category": "Network",
+    "assigned_team": "Network Team",
+    "description": "User is unable to connect to the corporate VPN. Connection times out or drops immediately after authentication.",
+    "resolution_notes": "Step 1: Verify the user's internet connection is active and stable.\nStep 2: Ask the user to restart the VPN client application.\nStep 3: Clear cached VPN credentials by navigating to VPN client settings and selecting 'Clear Saved Credentials'.\nStep 4: Ensure the VPN client is updated to the latest version.\nStep 5: Check if the user's VPN certificate has expired and renew if necessary.\nStep 6: If the issue persists, verify the VPN gateway status on the network monitoring dashboard.\nStep 7: Escalate to network infrastructure team if the gateway is unreachable."
+  },
+  {
+    "id": "KB0002",
+    "title": "Network Printer Not Reachable",
+    "category": "Network",
+    "assigned_team": "Network Team",
+    "description": "User cannot print to the network printer. The printer appears offline or the print jobs are stuck in the queue.",
+    "resolution_notes": "Step 1: Verify the printer is powered on and connected to the network.\nStep 2: Ping the printer's IP address to confirm network connectivity.\nStep 3: Ask the user to remove and re-add the printer in their system settings.\nStep 4: Clear the local print spooler by running 'net stop spooler' and 'net start spooler' as administrator.\nStep 5: Verify the printer's IP address has not changed by checking the DHCP lease table.\nStep 6: Check for any firewall rules blocking port 9100 or 631.\nStep 7: If the printer is still unreachable, restart the printer and check the network switch port."
+  },
+  {
+    "id": "KB0003",
+    "title": "DNS Resolution Failure",
+    "category": "Network",
+    "assigned_team": "Network Team",
+    "description": "User cannot access internal websites or services. Browser shows DNS resolution errors like 'DNS_PROBE_FINISHED_NXDOMAIN'.",
+    "resolution_notes": "Step 1: Run 'nslookup <hostname>' to verify DNS resolution from the user's machine.\nStep 2: Flush the DNS cache by running 'ipconfig /flushdns' on Windows or 'sudo dscacheutil -flushcache' on Mac.\nStep 3: Verify the user's DNS server settings point to the corporate DNS servers.\nStep 4: Check if the DNS issue is widespread or isolated to the user's machine.\nStep 5: Restart the DNS client service on the user's workstation.\nStep 6: If the issue is widespread, check the corporate DNS server health and logs.\nStep 7: Escalate to the network infrastructure team if DNS servers are unresponsive."
+  },
+  {
+    "id": "KB0004",
+    "title": "Application Crashing on Launch",
+    "category": "Software",
+    "assigned_team": "Application Support",
+    "description": "A business application crashes immediately upon launch or freezes during startup with an error dialog.",
+    "resolution_notes": "Step 1: Note the exact error message displayed when the application crashes.\nStep 2: Restart the user's workstation and attempt to launch the application again.\nStep 3: Check if the application was recently updated — roll back to the previous version if so.\nStep 4: Clear the application's cache/temp files from '%APPDATA%\\<AppName>'.\nStep 5: Repair the application installation via Control Panel > Programs > Repair.\nStep 6: Check Windows Event Viewer under Application logs for crash details.\nStep 7: Reinstall the application if repair does not resolve the issue.\nStep 8: Escalate to the vendor if crashes persist after clean reinstallation."
+  },
+  {
+    "id": "KB0005",
+    "title": "Email Client Not Syncing",
+    "category": "Software",
+    "assigned_team": "Application Support",
+    "description": "Outlook or email client is not syncing new emails. User reports missing emails or delayed delivery in their inbox.",
+    "resolution_notes": "Step 1: Check the user's internet and network connectivity.\nStep 2: Verify the email server status on the monitoring dashboard.\nStep 3: Ask the user to restart the Outlook application.\nStep 4: Run the Outlook inbox repair tool (scanpst.exe) to fix corrupted OST/PST files.\nStep 5: Remove and re-add the email account profile in Outlook.\nStep 6: Check if the mailbox is full — archive old emails if over quota.\nStep 7: Verify Autodiscover DNS records are resolving correctly.\nStep 8: If the issue persists, escalate to the Exchange/email server team."
+  },
+  {
+    "id": "KB0006",
+    "title": "Slow Application Performance",
+    "category": "Software",
+    "assigned_team": "Application Support",
+    "description": "User reports that a business application is running extremely slowly, with long load times and unresponsive UI.",
+    "resolution_notes": "Step 1: Check the user's system resource usage (CPU, RAM, disk) via Task Manager.\nStep 2: Close unnecessary background applications to free up resources.\nStep 3: Clear the application's temporary cache and restart it.\nStep 4: Verify the network latency to the application server using ping or traceroute.\nStep 5: Check the application server's health — CPU, memory, and disk I/O metrics.\nStep 6: Review recent application updates or configuration changes that may have degraded performance.\nStep 7: If server-side, restart the application service and monitor.\nStep 8: Escalate to the development team if the issue is code-related."
+  },
+  {
+    "id": "KB0007",
+    "title": "Password Reset Request",
+    "category": "Access Management",
+    "assigned_team": "IAM Team",
+    "description": "User is unable to log in to their account due to a forgotten or expired password and needs a password reset.",
+    "resolution_notes": "Step 1: Verify the user's identity using the standard identity verification procedure (employee ID, manager confirmation, or security questions).\nStep 2: Check if the account is locked out in Active Directory.\nStep 3: If locked, unlock the account and reset the password to a temporary value.\nStep 4: Set the 'User must change password at next logon' flag.\nStep 5: Communicate the temporary password to the user via a secure channel.\nStep 6: Confirm the user can log in successfully with the new password.\nStep 7: Document the password reset in the incident ticket."
+  },
+  {
+    "id": "KB0008",
+    "title": "Access Permission Request for Shared Drive",
+    "category": "Access Management",
+    "assigned_team": "IAM Team",
+    "description": "User requests access to a shared network drive or folder. They receive 'Access Denied' when trying to open the resource.",
+    "resolution_notes": "Step 1: Verify the user's request has been approved by their manager or resource owner.\nStep 2: Identify the correct Active Directory security group for the shared resource.\nStep 3: Add the user to the appropriate security group in Active Directory.\nStep 4: Ask the user to log off and log back on to refresh their group membership.\nStep 5: Verify the user can now access the shared drive.\nStep 6: If access is still denied, check NTFS permissions on the folder directly.\nStep 7: Document the access grant in the incident ticket and update the access register."
+  },
+  {
+    "id": "KB0009",
+    "title": "Multi-Factor Authentication Issue",
+    "category": "Access Management",
+    "assigned_team": "IAM Team",
+    "description": "User is unable to complete MFA verification. The authenticator app is not generating codes or the SMS code is not being received.",
+    "resolution_notes": "Step 1: Verify the user's identity through an alternate verification method.\nStep 2: Check if the user's MFA device (phone) has correct date/time settings — TOTP codes require accurate time.\nStep 3: If using an authenticator app, ask the user to remove and re-register the account in the app.\nStep 4: Generate a temporary bypass code from the MFA admin portal for immediate access.\nStep 5: Re-enroll the user's MFA device in the identity provider portal.\nStep 6: Verify the user can successfully authenticate with the new MFA setup.\nStep 7: If SMS-based, verify the user's phone number is correct in the directory."
+  },
+  {
+    "id": "KB0010",
+    "title": "Phishing Email Reported",
+    "category": "Security",
+    "assigned_team": "Security Team",
+    "description": "User has reported receiving a suspicious phishing email with a malicious link or attachment requesting sensitive information.",
+    "resolution_notes": "Step 1: Instruct the user NOT to click any links or open any attachments in the email.\nStep 2: Ask the user to forward the email as an attachment to the security team's phishing mailbox.\nStep 3: Analyze the email headers to identify the sender's true origin.\nStep 4: Check the URLs in the email against known threat intelligence feeds.\nStep 5: If the user clicked any link, initiate an immediate password reset and scan their workstation.\nStep 6: Block the sender's domain and malicious URLs on the email gateway.\nStep 7: Send a phishing alert to the organization if the email is part of a wider campaign.\nStep 8: Document the incident and update the threat intelligence database."
+  },
+  {
+    "id": "KB0011",
+    "title": "Malware Detected on Workstation",
+    "category": "Security",
+    "assigned_team": "Security Team",
+    "description": "Endpoint protection software has detected malware or a virus on the user's workstation. Alerts are showing in the security console.",
+    "resolution_notes": "Step 1: Immediately isolate the affected workstation from the network.\nStep 2: Check the endpoint protection console for details on the malware type and affected files.\nStep 3: Run a full system scan using the endpoint protection tool.\nStep 4: Quarantine or remove all detected threats.\nStep 5: Check if any data exfiltration occurred by reviewing network logs.\nStep 6: Reset the user's credentials as a precaution.\nStep 7: Reimage the workstation if the malware cannot be fully removed.\nStep 8: Reconnect to the network only after a clean scan is confirmed.\nStep 9: Document the incident and conduct a root cause analysis."
+  },
+  {
+    "id": "KB0012",
+    "title": "Unauthorized Access Attempt Detected",
+    "category": "Security",
+    "assigned_team": "Security Team",
+    "description": "Security monitoring has detected multiple failed login attempts or unauthorized access attempts to a critical system from an unusual location.",
+    "resolution_notes": "Step 1: Identify the source IP address and geolocation of the unauthorized attempts.\nStep 2: Check if the account belongs to a legitimate user and contact them to verify activity.\nStep 3: Temporarily lock the targeted account to prevent further attempts.\nStep 4: Block the offending IP address on the firewall.\nStep 5: Review SIEM logs for related suspicious activity across other systems.\nStep 6: Reset the account password and enable additional MFA requirements.\nStep 7: Check for any successful logins from the suspicious source and audit actions taken.\nStep 8: Document the incident and file a security incident report."
+  },
+  {
+    "id": "KB0013",
+    "title": "Laptop Hardware Failure",
+    "category": "Hardware",
+    "assigned_team": "Hardware Support",
+    "description": "User reports laptop is not powering on, has a cracked screen, or is experiencing hardware component failures like keyboard or trackpad not working.",
+    "resolution_notes": "Step 1: Ask the user to describe the exact hardware symptom (no power, screen issue, keyboard, etc.).\nStep 2: For power issues — perform a hard reset by holding the power button for 15 seconds, then try again.\nStep 3: Try connecting an external monitor to rule out display failure.\nStep 4: If under warranty, initiate a warranty repair request with the vendor.\nStep 5: If out of warranty, create a hardware replacement request and get cost approval.\nStep 6: Provide the user with a loaner device while the laptop is being repaired.\nStep 7: Back up user data from the device if possible before sending for repair.\nStep 8: Track the repair status and update the user."
+  },
+  {
+    "id": "KB0014",
+    "title": "Monitor Display Issues",
+    "category": "Hardware",
+    "assigned_team": "Hardware Support",
+    "description": "User's external monitor is not displaying, showing flickering, or has distorted colors. The display is connected but not functioning correctly.",
+    "resolution_notes": "Step 1: Check that the monitor power cable and video cable are securely connected.\nStep 2: Try a different video cable (HDMI, DisplayPort, USB-C) to rule out cable failure.\nStep 3: Test the monitor with a different computer to isolate the issue.\nStep 4: Update the graphics driver on the user's workstation.\nStep 5: Adjust the display resolution and refresh rate in Display Settings.\nStep 6: If using a docking station, restart the dock and verify firmware is up to date.\nStep 7: Replace the monitor if it is confirmed defective.\nStep 8: Order a replacement monitor if the current one cannot be repaired."
+  },
+  {
+    "id": "KB0015",
+    "title": "Database Connection Timeout",
+    "category": "Database",
+    "assigned_team": "Database Team",
+    "description": "Application is unable to connect to the database. Users see connection timeout errors or 'unable to establish connection' messages.",
+    "resolution_notes": "Step 1: Check the database server status — verify it is running and accessible.\nStep 2: Test connectivity from the application server to the database using telnet on the DB port.\nStep 3: Check if the database connection pool is exhausted — review active connections count.\nStep 4: Restart the application's database connection pool.\nStep 5: Review database server logs for any errors or resource constraints.\nStep 6: Check if there are long-running queries or locks blocking new connections.\nStep 7: Kill any stuck sessions if identified.\nStep 8: If the database server is overloaded, consider scaling resources or optimizing queries.\nStep 9: Escalate to the DBA team for further investigation if the issue persists."
+  },
+  {
+    "id": "KB0016",
+    "title": "Database Replication Lag",
+    "category": "Database",
+    "assigned_team": "Database Team",
+    "description": "Database replication between primary and secondary instances is lagging. Read replicas are returning stale data.",
+    "resolution_notes": "Step 1: Check the replication lag metric on the database monitoring dashboard.\nStep 2: Verify network connectivity and bandwidth between primary and replica servers.\nStep 3: Check for long-running write transactions on the primary that may be delaying replication.\nStep 4: Review the replica server's resource utilization (CPU, I/O, memory).\nStep 5: If the replica is under-resourced, increase its compute capacity.\nStep 6: Check for replication errors in the database logs and resolve any conflicts.\nStep 7: If lag is critical, consider temporarily redirecting read traffic to the primary.\nStep 8: Document the incident and plan for replication architecture review."
+  },
+  {
+    "id": "KB0017",
+    "title": "Cloud VM Instance Not Responding",
+    "category": "Cloud",
+    "assigned_team": "Cloud Infrastructure",
+    "description": "A cloud-hosted virtual machine is not responding to requests. The instance appears running in the console but is unreachable via SSH or RDP.",
+    "resolution_notes": "Step 1: Check the VM instance status in the cloud console (GCP/AWS/Azure).\nStep 2: Review the instance's serial console output for boot errors or kernel panics.\nStep 3: Verify the VM's security group/firewall rules allow inbound SSH (port 22) or RDP (port 3389).\nStep 4: Check if the VM's public IP or internal IP has changed.\nStep 5: Try stopping and starting the VM instance (not just restarting).\nStep 6: If the disk is corrupted, detach and attach it to a recovery instance to retrieve data.\nStep 7: Check cloud provider status page for any ongoing incidents in the region.\nStep 8: Restore from the latest snapshot if the VM cannot be recovered."
+  },
+  {
+    "id": "KB0018",
+    "title": "Cloud Storage Bucket Access Denied",
+    "category": "Cloud",
+    "assigned_team": "Cloud Infrastructure",
+    "description": "User or application is getting 403 Forbidden errors when trying to access objects in a cloud storage bucket.",
+    "resolution_notes": "Step 1: Verify the IAM roles and permissions assigned to the user or service account.\nStep 2: Check the bucket-level access control policy for any deny rules.\nStep 3: Verify the user or service account has the 'Storage Object Viewer' role at minimum.\nStep 4: Check if the bucket uses uniform or fine-grained access control and adjust accordingly.\nStep 5: If using signed URLs, verify the URL has not expired.\nStep 6: Check VPC Service Controls or organization policies that may restrict access.\nStep 7: Test access using the cloud CLI tool with the same credentials.\nStep 8: Grant the minimum required permissions and verify access is restored."
+  },
+  {
+    "id": "KB0019",
+    "title": "New Employee Onboarding Setup",
+    "category": "Service Request",
+    "assigned_team": "Service Desk",
+    "description": "New employee needs IT setup including laptop provisioning, account creation, email setup, and access to required applications and systems.",
+    "resolution_notes": "Step 1: Verify the new hire details from HR — name, department, start date, role, and manager.\nStep 2: Create the Active Directory account with appropriate group memberships based on role.\nStep 3: Set up the corporate email account and configure distribution lists.\nStep 4: Provision a laptop from inventory and install the standard software image.\nStep 5: Configure VPN access and multi-factor authentication.\nStep 6: Grant access to required applications, shared drives, and tools based on the role template.\nStep 7: Prepare the welcome kit with login credentials and IT quick-start guide.\nStep 8: Schedule an IT orientation session for the new employee's first day.\nStep 9: Document all provisioned access in the access management system."
+  },
+  {
+    "id": "KB0020",
+    "title": "Software Installation Request",
+    "category": "Service Request",
+    "assigned_team": "Service Desk",
+    "description": "User has requested installation of a new software application on their workstation. The software is not available in the self-service portal.",
+    "resolution_notes": "Step 1: Verify the software request has been approved by the user's manager.\nStep 2: Check if the software is on the approved software list.\nStep 3: If not approved, submit a software approval request to the IT governance team.\nStep 4: Verify license availability — check the license pool or procure a new license if needed.\nStep 5: Download the software from the official vendor or internal repository.\nStep 6: Install the software remotely using the endpoint management tool or schedule a local installation.\nStep 7: Configure the software with the required organizational settings.\nStep 8: Verify the software is working correctly and the user can access it.\nStep 9: Update the software inventory and license tracking system."
+  },
+  {
+    "id": "KB0021",
+    "title": "Wi-Fi Connectivity Dropping Intermittently",
+    "category": "Network",
+    "assigned_team": "Network Team",
+    "description": "User experiences frequent Wi-Fi disconnections throughout the day. The connection drops and reconnects every few minutes.",
+    "resolution_notes": "Step 1: Check if the issue is isolated to one user or affecting multiple users in the same area.\nStep 2: Ask the user to forget the Wi-Fi network and reconnect.\nStep 3: Update the wireless network adapter driver on the user's device.\nStep 4: Check the wireless access point (AP) health in the Wi-Fi controller dashboard.\nStep 5: Verify there is no channel interference from neighboring APs or devices.\nStep 6: Check the AP's client capacity — it may be overloaded.\nStep 7: If the AP is faulty, replace it and reconfigure.\nStep 8: Consider adjusting the AP's transmit power or channel assignment."
+  },
+  {
+    "id": "KB0022",
+    "title": "ERP System Login Failure",
+    "category": "Software",
+    "assigned_team": "Application Support",
+    "description": "User is unable to log into the ERP system. The login page loads but authentication fails with an 'Invalid credentials' or 'Account disabled' error.",
+    "resolution_notes": "Step 1: Verify the user is entering the correct username (check for typos or domain prefix).\nStep 2: Check if the user's ERP account is active in the ERP admin console.\nStep 3: If the account is locked, unlock it and reset the ERP-specific password.\nStep 4: Verify the user's role and permissions are correctly assigned in the ERP system.\nStep 5: Clear the browser cache and cookies, then retry.\nStep 6: Try logging in from a different browser or incognito mode.\nStep 7: Check the ERP authentication server logs for detailed error information.\nStep 8: Escalate to the ERP vendor support if the issue is system-wide."
+  },
+  {
+    "id": "KB0023",
+    "title": "SSL Certificate Expiry Warning",
+    "category": "Security",
+    "assigned_team": "Security Team",
+    "description": "Users are seeing browser security warnings about an expired or invalid SSL certificate when accessing an internal web application.",
+    "resolution_notes": "Step 1: Identify the affected domain and check the current SSL certificate expiry date.\nStep 2: Verify which Certificate Authority (CA) issued the certificate.\nStep 3: Generate a new Certificate Signing Request (CSR) for the domain.\nStep 4: Submit the CSR to the CA for renewal or issue a new certificate.\nStep 5: Install the renewed certificate on the web server or load balancer.\nStep 6: Verify the certificate chain is complete (root CA and intermediate certificates).\nStep 7: Test the new certificate using an SSL checker tool.\nStep 8: Set up automated certificate renewal and expiry alerts to prevent recurrence."
+  },
+  {
+    "id": "KB0024",
+    "title": "Kubernetes Pod CrashLoopBackOff",
+    "category": "Cloud",
+    "assigned_team": "Cloud Infrastructure",
+    "description": "A Kubernetes pod is in CrashLoopBackOff state. The container keeps restarting and the application is unavailable.",
+    "resolution_notes": "Step 1: Run 'kubectl describe pod <pod-name>' to check events and error messages.\nStep 2: Check the pod logs using 'kubectl logs <pod-name> --previous' to see the last crash output.\nStep 3: Verify the container image exists and is accessible from the cluster.\nStep 4: Check resource limits — the pod may be OOMKilled due to insufficient memory.\nStep 5: Verify environment variables and config maps are correctly mounted.\nStep 6: Check liveness and readiness probe configurations — they may be too aggressive.\nStep 7: Test the container image locally to reproduce the issue.\nStep 8: Fix the root cause (code bug, config error, resource limit) and redeploy.\nStep 9: Monitor the pod to ensure it stabilizes after the fix."
+  },
+  {
+    "id": "KB0025",
+    "title": "Database Backup Failure",
+    "category": "Database",
+    "assigned_team": "Database Team",
+    "description": "Scheduled database backup job has failed. The backup monitoring alert shows the last successful backup is older than the defined SLA.",
+    "resolution_notes": "Step 1: Check the backup job logs to identify the failure reason.\nStep 2: Verify there is sufficient disk space on the backup storage target.\nStep 3: Check network connectivity between the database server and backup storage.\nStep 4: Verify the backup service account credentials have not expired.\nStep 5: If the database is too large, check if the backup window is sufficient.\nStep 6: Re-run the backup job manually and monitor for errors.\nStep 7: If the backup storage is full, archive or delete old backups per the retention policy.\nStep 8: Verify the backup completed successfully and test a restore to confirm integrity.\nStep 9: Update the backup monitoring alert and document the incident."
+  }
+]
