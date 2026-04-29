@@ -24,8 +24,20 @@ Your job is to:
 1. Understand the incident description
 2. Classify the issue into category and subcategory
 3. Determine severity level (Low, Medium, High, Critical)
-4. Identify the correct assignment group
+4. Identify the correct assignment group from the AVAILABLE TEAMS below
 5. Provide a confidence score between 0.0 and 1.0
+
+=== AVAILABLE ASSIGNMENT TEAMS ===
+- Network Team          (network, VPN, firewall, DNS, connectivity issues)
+- Application Support   (software bugs, app crashes, email, ERP, CRM)
+- IAM Team              (access requests, password resets, permissions, SSO)
+- Security Team         (security incidents, malware, data breaches, suspicious activity)
+- Hardware Support      (laptops, monitors, printers, peripherals, hardware failures)
+- Database Team         (database errors, performance, backups, SQL, data issues)
+- Cloud Infrastructure  (cloud VMs, storage, AWS/Azure/GCP, Kubernetes, DevOps)
+- Service Desk          (general queries, fallback for unclear issues)
+
+You MUST pick "assigned_team" from the exact team names listed above.
 
 Base your decision on:
 - Keywords in the description
@@ -37,7 +49,7 @@ Always return output in **strict JSON** with these exact keys:
   "category": "<string>",
   "subcategory": "<string>",
   "severity": "<Low|Medium|High|Critical>",
-  "assigned_team": "<string>",
+  "assigned_team": "<one of the team names above>",
   "confidence_score": <float 0-1>,
   "summary": "<one-line summary>"
 }}
@@ -143,6 +155,7 @@ class ClassificationAgent:
         )
         self._parser = JsonOutputParser(pydantic_object=ClassificationResult)
         self._chain = self._prompt | self._llm | self._parser
+        self._generated_titles: list[str] = []
 
     def classify(
         self,
@@ -181,15 +194,26 @@ class ClassificationAgent:
         )
         return result
 
-    def generate_incident(self) -> dict:
-        """Use LLM to auto-generate a unique realistic dummy IT incident."""
+    def generate_incidents(self, count: int = 5) -> list[dict]:
+        """Use LLM to auto-generate *count* unique realistic dummy IT incidents in one call."""
+        avoid_block = ""
+        if self._generated_titles:
+            recent = self._generated_titles[-50:]
+            avoid_block = (
+                "IMPORTANT — the following incidents have ALREADY been generated. "
+                "Do NOT repeat or closely rephrase any of them:\n"
+                + "\n".join(f"- {t}" for t in recent)
+                + "\n\n"
+            )
+
         gen_prompt = ChatPromptTemplate.from_messages([
             ("system", (
                 "You are an IT incident generator for testing purposes. "
-                "Generate a realistic, unique IT support incident that would be filed in ServiceNow. "
-                "Each call must produce a DIFFERENT scenario — vary the department, issue type, and context. "
-                "Pick from diverse categories: network, hardware, software, security, access, email, printing, database, cloud, etc. "
-                "Return strict JSON with these keys:\n"
+                f"Generate exactly {count} realistic, unique IT support incidents that would be filed in ServiceNow. "
+                "Each incident must be a DIFFERENT scenario — vary the department, issue type, caller, and context. "
+                "Pick from diverse categories: network, hardware, software, security, access, email, printing, database, cloud, telephony, etc. "
+                f"{avoid_block}"
+                "Return a strict JSON **array** of {count} objects. Each object has these keys:\n"
                 '{{\n'
                 '  "short_description": "<concise title, max 160 chars>",\n'
                 '  "description": "<detailed 2-3 sentence description with specifics>",\n'
@@ -198,11 +222,23 @@ class ClassificationAgent:
                 '  "impact": "<1|2|3>"\n'
                 '}}\n'
                 "Urgency/Impact: 1=High, 2=Medium, 3=Low.\n"
-                "Do NOT include any text outside the JSON object."
+                "Do NOT include any text outside the JSON array."
             )),
-            ("human", "Generate a unique IT incident now."),
+            ("human", f"Generate {count} unique IT incidents now."),
         ])
         chain = gen_prompt | self._llm | self._parser
-        result = chain.invoke({})
-        logger.info("incident_generated", short_desc=result.get("short_description"))
-        return result
+        results = chain.invoke({})
+
+        # Normalise: parser may return a list or a dict with a key
+        if isinstance(results, dict):
+            results = list(results.values())[0] if results else []
+        if not isinstance(results, list):
+            results = [results]
+
+        for r in results:
+            title = r.get("short_description", "")
+            if title:
+                self._generated_titles.append(title)
+
+        logger.info("incidents_generated", count=len(results))
+        return results

@@ -95,6 +95,7 @@ def process_incident(incident: Incident) -> dict:
         "subcategory": classification.subcategory,
         "severity": classification.severity.value,
         "assigned_team": decision.assignment_group,
+        "assigned_to": decision.assigned_to or "",
         "confidence": classification.confidence_score,
         "summary": classification.summary,
         "similar_count": len(similar),
@@ -109,12 +110,18 @@ def process_incident(incident: Incident) -> dict:
 
 
 def poll_new_incidents() -> None:
-    """Scheduled job: poll ServiceNow for new incidents."""
+    """Scheduled job: poll ServiceNow for new incidents.
+    Skips incidents created via the dashboard (those are assigned manually).
+    """
     global last_poll_time
+    # Collect sys_ids of dashboard-created incidents so the poller doesn't auto-assign them
+    created_sys_ids = {c["sys_id"] for c in created_incidents}
     try:
         incidents = snow_client.get_new_incidents(last_check=last_poll_time)
         last_poll_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         for inc in incidents:
+            if inc.sys_id in created_sys_ids or inc.sys_id in assigned_sys_ids:
+                continue
             try:
                 process_incident(inc)
             except Exception:
@@ -233,35 +240,36 @@ def create_app() -> Flask:
 
     @application.route("/api/create-incident", methods=["POST"])
     def create_incident_endpoint():
-        """Auto-generate a unique dummy incident via LLM and create it in ServiceNow."""
-        # LLM generates a unique realistic incident
-        structured = agent.generate_incident()
+        """Auto-generate 5 unique dummy incidents via LLM and create them in ServiceNow."""
+        batch = agent.generate_incidents(count=5)
+        created_batch = []
 
-        snow_payload = {
-            "short_description": structured.get("short_description", "Generated incident"),
-            "description": structured.get("description", ""),
-            "category": structured.get("category", ""),
-            "urgency": structured.get("urgency", "2"),
-            "impact": structured.get("impact", "2"),
-        }
+        for structured in batch:
+            snow_payload = {
+                "short_description": structured.get("short_description", "Generated incident"),
+                "description": structured.get("description", ""),
+                "category": structured.get("category", ""),
+                "urgency": structured.get("urgency", "2"),
+                "impact": structured.get("impact", "2"),
+            }
 
-        result = snow_client.create_incident(snow_payload)
+            result = snow_client.create_incident(snow_payload)
 
-        # Store in created (unassigned) list
-        created_entry = {
-            "sys_id": result.get("sys_id"),
-            "number": result.get("number"),
-            "short_description": snow_payload["short_description"],
-            "description": snow_payload["description"],
-            "category": structured.get("category", ""),
-            "urgency": snow_payload["urgency"],
-            "impact": snow_payload["impact"],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-        created_incidents.insert(0, created_entry)
+            created_entry = {
+                "sys_id": result.get("sys_id"),
+                "number": result.get("number"),
+                "short_description": snow_payload["short_description"],
+                "description": snow_payload["description"],
+                "category": structured.get("category", ""),
+                "urgency": snow_payload["urgency"],
+                "impact": snow_payload["impact"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            created_incidents.insert(0, created_entry)
+            created_batch.append(created_entry)
 
-        logger.info("incident_created", number=result.get("number"))
-        return jsonify({"status": "created", **created_entry})
+        logger.info("incidents_created", count=len(created_batch))
+        return jsonify({"status": "created", "count": len(created_batch), "incidents": created_batch})
 
     @application.route("/api/assign-incident", methods=["POST"])
     def assign_incident_endpoint():

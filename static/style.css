@@ -394,6 +394,13 @@ body {
 }
 .incident-card .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
 
+/* Assigned-to row */
+.assigned-to-row {
+    font-size: 0.76rem; color: var(--text-secondary);
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.assigned-to-row strong { color: var(--text-primary); font-weight: 700; }
+
 /* ---- Badges ---- */
 .badge {
     display: inline-flex; align-items: center; gap: 3px;

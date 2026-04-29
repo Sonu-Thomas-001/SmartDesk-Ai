@@ -21,6 +21,52 @@ SEVERITY_PRIORITY_MAP = {
 
 FALLBACK_QUEUE = "Service Desk"
 
+# ---- Team Roster: group → members ----
+TEAM_ROSTER = {
+    "Network Team": {
+        "members": ["Alice Johnson", "Bob Martinez"],
+        "lead": "Alice Johnson",
+    },
+    "Application Support": {
+        "members": ["Charlie Kim", "Diana Patel"],
+        "lead": "Charlie Kim",
+    },
+    "IAM Team": {
+        "members": ["Ethan Brooks", "Fiona Chen"],
+        "lead": "Ethan Brooks",
+    },
+    "Security Team": {
+        "members": ["Grace Lee", "Hassan Ali"],
+        "lead": "Grace Lee",
+    },
+    "Hardware Support": {
+        "members": ["Isaac Turner", "Julia Reyes"],
+        "lead": "Isaac Turner",
+    },
+    "Database Team": {
+        "members": ["Kevin Nakamura", "Laura Singh"],
+        "lead": "Kevin Nakamura",
+    },
+    "Cloud Infrastructure": {
+        "members": ["Michael Okonkwo", "Natalie Dubois"],
+        "lead": "Michael Okonkwo",
+    },
+    "Service Desk": {
+        "members": ["Oliver Grant", "Priya Sharma"],
+        "lead": "Oliver Grant",
+    },
+}
+
+AVAILABLE_TEAMS = list(TEAM_ROSTER.keys())
+
+
+def pick_assignee(team_name: str) -> str | None:
+    """Round-robin or lead pick from the roster."""
+    roster = TEAM_ROSTER.get(team_name)
+    if not roster:
+        roster = TEAM_ROSTER.get(FALLBACK_QUEUE)
+    return roster["lead"] if roster else None
+
 
 class DecisionEngine:
     """Determines assignment action based on confidence thresholds."""
@@ -69,6 +115,16 @@ class DecisionEngine:
                         action = AssignmentAction.SUGGEST
                         assignment_group = most_common_team
 
+        # Normalise team name to one from our roster
+        if assignment_group not in TEAM_ROSTER:
+            for name in AVAILABLE_TEAMS:
+                if name.lower() in assignment_group.lower() or assignment_group.lower() in name.lower():
+                    assignment_group = name
+                    break
+            else:
+                assignment_group = FALLBACK_QUEUE
+
+        assigned_to = pick_assignee(assignment_group)
         priority = SEVERITY_PRIORITY_MAP.get(classification.severity.value, "3")
         worklog = self._build_worklog(classification, similar_incidents, action)
 
@@ -77,6 +133,7 @@ class DecisionEngine:
             classification=classification,
             similar_incidents=similar_incidents,
             assignment_group=assignment_group,
+            assigned_to=assigned_to,
             priority=priority,
             worklog_entry=worklog,
         )

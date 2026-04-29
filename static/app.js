@@ -184,6 +184,7 @@ function renderAssignedFeed(results) {
                 <span class="badge badge-severity-${r.severity.toLowerCase()}">${esc(r.severity)}</span>
                 <span class="badge badge-action-auto_assign">${esc(r.assigned_team)}</span>
             </div>
+            ${r.assigned_to ? `<div class="assigned-to-row">👤 <strong>${esc(r.assigned_to)}</strong> <span style="color:var(--text-muted)">· ${esc(r.assigned_team)}</span></div>` : ''}
             <div class="confidence-bar-wrap">
                 <span>Confidence</span>
                 <div class="confidence-bar">
@@ -222,18 +223,19 @@ function renderTeamBreakdown(teamMap) {
 async function createIncident() {
     const btn = document.getElementById("btn-create-incident");
     btn.disabled = true;
-    btn.textContent = "Generating…";
+    btn.textContent = "Generating 5…";
     try {
         const data = await apiPost("/api/create-incident");
-        showToast(`Incident ${data.number} created`, "success");
+        const count = data.count || data.incidents?.length || 1;
+        showToast(`${count} incidents created`, "success");
         await loadStats();
         await loadRecent();
     } catch (e) {
         console.error("Create incident failed:", e);
-        showToast("Failed to create incident", "error");
+        showToast("Failed to create incidents", "error");
     } finally {
         btn.disabled = false;
-        btn.textContent = "+ Create Incident";
+        btn.textContent = "+ Create Incidents";
     }
 }
 
