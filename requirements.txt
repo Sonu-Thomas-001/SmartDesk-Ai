@@ -1,0 +1,15 @@
+flask>=3.1.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-google-vertexai>=2.0.0
+google-cloud-aiplatform>=1.60.0
+langchain-community>=0.3.0
+chromadb>=0.5.5
+openai>=1.47.0
+requests>=2.32.3
+python-dotenv>=1.0.1
+pydantic>=2.9.2
+pydantic-settings>=2.5.2
+apscheduler>=3.10.4
+tenacity>=9.0.0
+structlog>=24.4.0

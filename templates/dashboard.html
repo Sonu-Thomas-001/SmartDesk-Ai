@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmartDesk AI — Incident Triage Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Animated background mesh -->
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<!-- ===== Header ===== -->
+<header class="header">
+    <div class="header-brand">
+        <div class="logo-wrap">
+            <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="8" fill="url(#logo-grad)"/>
+                <path d="M8 16C8 11.58 11.58 8 16 8C20.42 8 24 11.58 24 16C24 20.42 20.42 24 16 24" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="16" cy="16" r="3" fill="white"/>
+                <path d="M16 24C13.8 24 12 22.2 12 20" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+            </svg>
+            <div>
+                <h1>SmartDesk AI</h1>
+                <span class="header-sub">Intelligent Incident Triage</span>
+            </div>
+        </div>
+    </div>
+    <div class="header-actions">
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span class="status-text">Live</span>
+        </div>
+        <div class="header-divider"></div>
+        <button id="btn-create-incident" class="btn btn-glow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Incident
+        </button>
+        <button id="btn-poll" class="btn btn-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Poll Now
+        </button>
+        <button id="btn-refresh" class="btn btn-ghost">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.2M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            Refresh
+        </button>
+        <button id="theme-toggle" class="theme-btn" title="Toggle theme">
+            <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+    </div>
+</header>
+
+<!-- ===== Stats Row ===== -->
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Knowledge Base</div>
+            <div class="stat-value" id="stat-kb-size">0</div>
+            <div class="stat-sub">stored incidents</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Processed</div>
+            <div class="stat-value" id="stat-processed">0</div>
+            <div class="stat-sub">incidents triaged</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Accuracy</div>
+            <div class="stat-value" id="stat-accuracy">—</div>
+            <div class="stat-sub">from feedback</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Feedback</div>
+            <div class="stat-value" id="stat-total-feedback">0</div>
+            <div class="stat-sub">total reviews</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Main Grid ===== -->
+<section class="main-content">
+
+    <!-- Left: Incident Feed -->
+    <div class="feed-container">
+        <div class="feed-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Created Incidents
+                </div>
+                <span class="section-badge badge-pending" id="created-count">0 pending</span>
+            </div>
+            <div class="feed" id="created-feed">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    </div>
+                    <p class="empty-title">No unassigned incidents</p>
+                    <p class="empty-desc">Click "+ Create Incident" to auto-generate one with AI</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="feed-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Assigned Incidents
+                </div>
+                <span class="section-badge badge-success" id="assigned-count">0 assigned</span>
+            </div>
+            <div class="feed" id="incident-feed">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    </div>
+                    <p class="empty-title">No incidents assigned yet</p>
+                    <p class="empty-desc">Create an incident, then click "Assign with AI" to trigger the agent</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Side Panel -->
+    <div class="side-panel">
+        <div class="panel-card">
+            <div class="panel-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <h3>Team Breakdown</h3>
+            </div>
+            <div id="team-breakdown">
+                <p class="panel-empty">No data yet</p>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <h3>How It Works</h3>
+            </div>
+            <div class="steps-list">
+                <div class="step-item">
+                    <span class="step-num">1</span>
+                    <span>Incidents detected via polling or webhook</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">2</span>
+                    <span>LLM classifies category, severity & team</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">3</span>
+                    <span>Similar incidents retrieved from ChromaDB</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">4</span>
+                    <span>Decision engine routes based on confidence</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">5</span>
+                    <span>ServiceNow updated with assignment</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68 1.65 1.65 0 0 0 10 3.17V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <h3>Configuration</h3>
+            </div>
+            <div class="config-list">
+                <div class="config-row">
+                    <span>Auto-assign threshold</span>
+                    <span class="config-value">≥ 80%</span>
+                </div>
+                <div class="config-row">
+                    <span>Suggest threshold</span>
+                    <span class="config-value">≥ 50%</span>
+                </div>
+                <div class="config-row">
+                    <span>Polling interval</span>
+                    <span class="config-value">30s</span>
+                </div>
+                <div class="config-row">
+                    <span>LLM Model</span>
+                    <span class="config-value">Gemini 2.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
