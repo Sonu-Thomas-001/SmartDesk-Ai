@@ -211,7 +211,20 @@ class ClassificationAgent:
                 "You are an IT incident generator for testing purposes. "
                 f"Generate exactly {count} realistic, unique IT support incidents that would be filed in ServiceNow. "
                 "Each incident must be a DIFFERENT scenario — vary the department, issue type, caller, and context. "
-                "Pick from diverse categories: network, hardware, software, security, access, email, printing, database, cloud, telephony, etc. "
+                "\n\n"
+                "CRITICAL: Each incident MUST clearly map to a DIFFERENT assignment team from this list. "
+                "Spread incidents evenly across these teams:\n"
+                "- Network Team          → generate incidents about VPN failures, DNS issues, firewall blocks, Wi-Fi drops, network outages, slow connectivity\n"
+                "- Application Support   → generate incidents about app crashes, email issues, ERP errors, software bugs, slow application performance\n"
+                "- IAM Team              → generate incidents about password resets, account lockouts, MFA problems, access requests, SSO failures, permission issues\n"
+                "- Security Team         → generate incidents about phishing emails, malware alerts, suspicious logins, data breach concerns, SSL certificate issues\n"
+                "- Hardware Support      → generate incidents about broken laptops, monitor failures, keyboard/mouse issues, printer jams, docking station problems\n"
+                "- Database Team         → generate incidents about database connection errors, slow queries, backup failures, replication lag, data corruption\n"
+                "- Cloud Infrastructure  → generate incidents about VM outages, Kubernetes pod crashes, cloud storage errors, deployment failures, auto-scaling issues\n"
+                "- Service Desk          → generate incidents about new employee onboarding, software install requests, general IT questions, equipment requests\n"
+                "\n"
+                f"Pick {count} DIFFERENT teams from the list above and generate one incident per team. "
+                "Make sure the description contains strong keywords that clearly indicate the target team. "
                 f"{avoid_block}"
                 "Return a strict JSON **array** of " + str(count) + " objects. Each object has these keys:\n"
                 '{{\n'
@@ -224,7 +237,7 @@ class ClassificationAgent:
                 "Urgency/Impact: 1=High, 2=Medium, 3=Low.\n"
                 "Do NOT include any text outside the JSON array."
             )),
-            ("human", f"Generate {count} unique IT incidents now."),
+            ("human", f"Generate {count} unique IT incidents now, each targeting a different team."),
         ])
         chain = gen_prompt | self._llm | self._parser
         results = chain.invoke({})
