@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     loadStats();
     loadRecent();
+    loadConfig();
+    loadTeams();
     startAutoRefresh();
 
     document.getElementById("btn-create-incident").addEventListener("click", createIncident);
@@ -73,6 +75,56 @@ async function apiPost(path, body = {}) {
     });
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     return res.json();
+}
+
+async function apiPut(path, body = {}) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+}
+
+// ---- Load / Save Config ----
+async function loadConfig() {
+    try {
+        const c = await apiFetch("/api/config");
+        document.getElementById("cfg-auto-threshold").value = Math.round(c.auto_assign_threshold * 100);
+        document.getElementById("cfg-suggest-threshold").value = Math.round(c.suggest_threshold * 100);
+        document.getElementById("cfg-polling").value = c.polling_interval;
+        document.getElementById("cfg-model").value = c.gemini_model;
+    } catch (e) {
+        console.error("Failed to load config:", e);
+    }
+}
+
+async function saveConfig() {
+    const btn = document.getElementById("btn-save-config");
+    const msg = document.getElementById("config-saved-msg");
+    btn.disabled = true;
+    msg.textContent = "";
+    try {
+        const payload = {
+            auto_assign_threshold: parseInt(document.getElementById("cfg-auto-threshold").value) / 100,
+            suggest_threshold: parseInt(document.getElementById("cfg-suggest-threshold").value) / 100,
+            polling_interval: parseInt(document.getElementById("cfg-polling").value),
+            gemini_model: document.getElementById("cfg-model").value.trim(),
+        };
+        await apiPut("/api/config", payload);
+        msg.textContent = "Saved ✓";
+        msg.style.color = "var(--green)";
+        showToast("Configuration saved", "success");
+        setTimeout(() => { msg.textContent = ""; }, 3000);
+    } catch (e) {
+        console.error("Save config failed:", e);
+        msg.textContent = "Error";
+        msg.style.color = "var(--red)";
+        showToast("Failed to save config", "error");
+    } finally {
+        btn.disabled = false;
+    }
 }
 
 // ---- Load stats ----
@@ -151,7 +203,6 @@ function renderCreatedFeed(created) {
 // ---- Render assigned incidents feed ----
 function renderAssignedFeed(results) {
     const feed = document.getElementById("incident-feed");
-    const teamMap = {};
 
     if (!results || results.length === 0) {
         feed.innerHTML = `
@@ -159,13 +210,11 @@ function renderAssignedFeed(results) {
                 <div class="icon">📭</div>
                 <p>No incidents assigned yet.<br>Create an incident, then click "Assign" to trigger the AI agent.</p>
             </div>`;
-        renderTeamBreakdown({});
+        renderTeamBreakdown();
         return;
     }
 
     feed.innerHTML = results.map((r, i) => {
-        teamMap[r.assigned_team] = (teamMap[r.assigned_team] || 0) + 1;
-
         const confPct = (r.confidence * 100).toFixed(0);
         const confColor = r.confidence >= 0.8 ? "var(--green)"
             : r.confidence >= 0.5 ? "var(--yellow)" : "var(--red)";
@@ -200,23 +249,44 @@ function renderAssignedFeed(results) {
         </div>`;
     }).join("");
 
-    renderTeamBreakdown(teamMap);
+    loadTeams();
 }
 
 // ---- Team breakdown panel ----
-function renderTeamBreakdown(teamMap) {
+let _teamData = [];
+
+async function loadTeams() {
+    try {
+        const data = await apiFetch("/api/teams");
+        _teamData = data.teams || [];
+        renderTeamBreakdown();
+    } catch (e) {
+        console.error("Failed to load teams:", e);
+    }
+}
+
+function renderTeamBreakdown() {
     const container = document.getElementById("team-breakdown");
-    const entries = Object.entries(teamMap).sort((a, b) => b[1] - a[1]);
-    if (entries.length === 0) {
-        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.82rem;">No data yet</p>';
+    if (!_teamData.length) {
+        container.innerHTML = '<p class="panel-empty">No teams configured</p>';
         return;
     }
-    container.innerHTML = entries.map(([team, count]) => `
-        <div class="team-row">
-            <span>${esc(team)}</span>
-            <span class="count">${count}</span>
-        </div>
-    `).join("");
+
+    container.innerHTML = _teamData.map(t => {
+        const memberList = t.members.map(m => {
+            const isLead = m === t.lead;
+            return `<span class="team-member${isLead ? ' team-lead' : ''}">${esc(m)}${isLead ? ' ★' : ''}</span>`;
+        }).join("");
+
+        return `
+        <div class="team-group">
+            <div class="team-group-header">
+                <span class="team-group-name">${esc(t.name)}</span>
+                <span class="count">${t.assigned_count}</span>
+            </div>
+            <div class="team-members">${memberList}</div>
+        </div>`;
+    }).join("");
 }
 
 // ---- Create Incident (one-click, LLM auto-generates) ----

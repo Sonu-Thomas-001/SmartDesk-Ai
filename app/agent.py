@@ -213,7 +213,7 @@ class ClassificationAgent:
                 "Each incident must be a DIFFERENT scenario — vary the department, issue type, caller, and context. "
                 "Pick from diverse categories: network, hardware, software, security, access, email, printing, database, cloud, telephony, etc. "
                 f"{avoid_block}"
-                "Return a strict JSON **array** of {count} objects. Each object has these keys:\n"
+                "Return a strict JSON **array** of " + str(count) + " objects. Each object has these keys:\n"
                 '{{\n'
                 '  "short_description": "<concise title, max 160 chars>",\n'
                 '  "description": "<detailed 2-3 sentence description with specifics>",\n'

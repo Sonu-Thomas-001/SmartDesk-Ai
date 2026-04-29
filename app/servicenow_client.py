@@ -27,9 +27,9 @@ class ServiceNowClient:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10))
     def get_new_incidents(self, last_check: str | None = None) -> list[Incident]:
-        """Fetch incidents with state=New. Optionally filter by creation time."""
+        """Fetch incidents with state=New and no assignment group yet."""
         params: dict[str, Any] = {
-            "sysparm_query": "state=1",  # 1 = New
+            "sysparm_query": "state=1^assignment_groupISEMPTY",  # New + unassigned
             "sysparm_fields": (
                 "sys_id,number,short_description,description,"
                 "category,caller_id,department,state,priority,sys_created_on"

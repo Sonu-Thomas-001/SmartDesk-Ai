@@ -194,6 +194,75 @@ def create_app() -> Flask:
             "accuracy": accuracy,
         })
 
+    @application.route("/api/config", methods=["GET"])
+    def get_config():
+        return jsonify({
+            "auto_assign_threshold": decision_engine.auto_threshold,
+            "suggest_threshold": decision_engine.suggest_threshold,
+            "polling_interval": settings.polling_interval_seconds,
+            "gemini_model": settings.gemini_model,
+        })
+
+    @application.route("/api/config", methods=["PUT"])
+    def update_config():
+        payload = request.get_json(force=True)
+
+        if "auto_assign_threshold" in payload:
+            val = float(payload["auto_assign_threshold"])
+            if 0 <= val <= 1:
+                decision_engine.auto_threshold = val
+
+        if "suggest_threshold" in payload:
+            val = float(payload["suggest_threshold"])
+            if 0 <= val <= 1:
+                decision_engine.suggest_threshold = val
+
+        if "polling_interval" in payload:
+            val = int(payload["polling_interval"])
+            if 5 <= val <= 3600:
+                settings.polling_interval_seconds = val
+                # Reschedule the poller with new interval
+                scheduler.reschedule_job(
+                    "incident_poller",
+                    trigger="interval",
+                    seconds=val,
+                )
+
+        if "gemini_model" in payload:
+            model = str(payload["gemini_model"]).strip()
+            if model:
+                settings.gemini_model = model
+
+        logger.info("config_updated", payload=payload)
+        return jsonify({
+            "status": "saved",
+            "auto_assign_threshold": decision_engine.auto_threshold,
+            "suggest_threshold": decision_engine.suggest_threshold,
+            "polling_interval": settings.polling_interval_seconds,
+            "gemini_model": settings.gemini_model,
+        })
+
+    @application.route("/api/teams")
+    def get_teams():
+        """Return the full team roster with assignment counts."""
+        from app.decision_engine import TEAM_ROSTER
+        # Count assignments per team from recent_results
+        team_counts: dict[str, int] = {}
+        for r in recent_results:
+            t = r.get("assigned_team", "")
+            if t:
+                team_counts[t] = team_counts.get(t, 0) + 1
+
+        teams = []
+        for name, info in TEAM_ROSTER.items():
+            teams.append({
+                "name": name,
+                "lead": info["lead"],
+                "members": info["members"],
+                "assigned_count": team_counts.get(name, 0),
+            })
+        return jsonify({"teams": teams})
+
     @application.route("/api/webhook", methods=["POST"])
     def webhook_receiver():
         """Receive incident data from a ServiceNow Business Rule / webhook."""
@@ -283,6 +352,11 @@ def create_app() -> Flask:
             return jsonify({"error": "Incident already assigned"}), 409
 
         incident = snow_client.get_incident(sys_id)
+
+        # Only assign incidents still in New state (1)
+        if incident.state and incident.state != "1":
+            return jsonify({"error": "Incident is no longer in New state"}), 409
+
         result = process_incident(incident)
 
         if "error" in result:
